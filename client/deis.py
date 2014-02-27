@@ -647,6 +647,12 @@ class DeisClient(object):
         username = args.get('--username')
         if not username:
             username = raw_input('username: ')
+            # this is limited due to docker's limit on image names
+            # when pushed to repository
+            match = re.match(r'[a-z0-9_]+', username)
+            if not match:
+                print("Illegal username, only [a-z0-9_] are allowed")
+                return False
         password = args.get('--password')
         if not password:
             password = getpass('password: ')
