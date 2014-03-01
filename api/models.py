@@ -8,11 +8,13 @@ from __future__ import unicode_literals
 import importlib
 import logging
 import os
+import re
 import subprocess
 
 from celery.canvas import group
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import post_delete
 from django.db.models.signals import post_save
@@ -867,6 +869,13 @@ def new_release(sender, **kwargs):
         publish_release(repository_path, config.values, tag)
     return release
 
+
+# Observe User pre_save hook to validate username
+@receiver(models.signals.pre_save, sender=User)
+def User_pre_save(sender, **kwargs):
+    username = kwargs['instance'].username
+    if not re.match(r'^[a-z0-9_]{4,30}$', username):
+        raise ValidationError("Illegal username, 4-30 characters, only [a-z0-9_] are allowed")
 
 # define update/delete callbacks for synchronizing
 # models with the configuration management backend
