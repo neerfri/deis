@@ -5,6 +5,7 @@ RESTful view classes for presenting Deis API objects.
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
+import re
 
 from Crypto.PublicKey import RSA
 from django.contrib.auth.models import AnonymousUser
@@ -133,6 +134,13 @@ class UserRegistrationView(viewsets.GenericViewSet,
     authentication_classes = (AnonymousAuthentication,)
     permission_classes = (IsAnonymous,)
     serializer_class = serializers.UserSerializer
+
+    def create(self, request, *args, **kwargs):
+        username = request.DATA.get('username')
+        if not re.match(r'^[a-z0-9_]{4,30}$', username):
+            return Response('Invalid username, 4-30 characters, only [a-z0-9_] are allowed',
+                            status=status.HTTP_400_BAD_REQUEST)
+        return super(UserRegistrationView, self).create(request, *args, **kwargs)
 
     def post_save(self, user, created=False):
         """Seed both `Providers` and `Flavors` after registration."""
